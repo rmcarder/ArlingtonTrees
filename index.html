@@ -15,11 +15,11 @@
     <script src="https://d3js.org/d3-color.v1.min.js"></script>
 <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
 <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
-<script src="https://unpkg.com/d3-simple-slider"></script>
-
       <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
     <script src="https://d3js.org/d3.v4.js"></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.js'></script>
+<link href='https://api.mapbox.com/mapbox-gl-js/v1.11.0/mapbox-gl.css' rel='stylesheet' />
 
   <!-- Bootstrap core CSS -->
   <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -28,56 +28,13 @@
   <link href="css/simple-sidebar.css" rel="stylesheet">
 
 
- <script type="text/javascript">
-
-      const addRow = (cellsObject, header=false) => {
-          if (!document.getElementsByTagName) return;
-          tabBody = document.getElementsByTagName(header ? "thead" : "tbody").item(0);
-          row = document.createElement("tr");
-          const headers = Object.keys(cellsObject);
-          cells = header ? headers : Object.values(cellsObject);
-
-          cells.forEach((cellContent, idx) => {
-            cell = document.createElement(header ? "th" : "td");
-            let contentNode;
-            if (cellContent.includes('http')) {
-              contentNode = document.createElement('a');
-              contentNode.setAttribute('href', cellContent);
-              linkTextNode = document.createTextNode(headers[idx]);
-              contentNode.appendChild(linkTextNode);
-            } else {
-              contentNode = document.createTextNode(cellContent);
-            }
-            cell.appendChild(contentNode);
-            row.appendChild(cell);
-          });
-
-          tabBody.appendChild(row);
-      }
-
-      const fileLocation = "https://docs.google.com/spreadsheets/export?format=csv&id=1hkVB4eg3x_jTpcbxqyRVuGmie4AnrNifczxVdi_wum4&gid=1098322880";
-
-      const processData = (data) => {
-        const rows = $.csv.toObjects(data);
-        addRow(rows[0], header=true);
-        rows.forEach((project) => addRow(project, false));
-        $('.datatable').DataTable({ "order": [[ 6, "desc" ]],paging: false,searching: false, bInfo : false});
-      };
-
-      $(document).ready(() => {
-          $.ajax({
-              type: "GET",
-              url: fileLocation,
-              dataType: "text",
-              success: (data) => { processData(data); }
-           });
-      });
-
-    </script>
-
-
 
 </head>
+
+<style>
+  body { margin: 0; padding: 0; }
+ 
+</style>
 
 <body>
 
@@ -88,8 +45,8 @@
     <!-- Page Content -->
     <div id="page-content-wrapper">
 
-      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-       <a href="index.html"><img class="icon logo logo-smaller" src="assets/AMBFHL with text outlines.svg" width="250" alt="AMBFHL logo"></a>
+          <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+       <a href="index.html"><img class="icon logo logo-smaller" src="assets/DKDC.png" width="250" alt="AMBFHL logo"></a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -97,22 +54,15 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
              <li class="nav-item active">
-              <a class="nav-link" href="index.html">Home<span class="sr-only">(current)</span></a>
+              <a class="nav-link" href="index.html">Home</a>
             </li>
             <li class="nav-item active">
-              <a class="nav-link" href="Standings.html">Full Standings/Stats</a>
+              <a class="nav-link" href="map.html">Tree Canopy and Demographics</a>
             </li>
                <li class="nav-item active">
-                  <a class="nav-link" href="hotness.html">Hottness</a>
+                  <a class="nav-link" href="map.html">About</a>
             </li>        
 
-              <li class="nav-item active">
-                   <a class="nav-link" href="gamelog.html">Game Log</a>
-            </li>
-            </li>
-               <li class="nav-item active">
-                  <a class="nav-link" href="Archive.html">Tournament Archive</a>
-            </li>        
 
 
           </ul>
@@ -120,44 +70,27 @@
       </nav>
 
       <div class="container-fluid">
-        <h2 class="mt-4">AMBFHL Tournament Central</h2>
-        <p>Enter new game scores, view overall standings, and see who Hott who not.</p>
-         <p><a href="https://docs.google.com/forms/d/e/1FAIpQLSe0LCP2GSY0ekzsh-nbFWtkUvIfRfBZ4-WhAqqVzL-oH2lp9A/viewform" target="_blank" class="btn btn-primary" role="button">Enter New Score</a></p>
-        <h4>6/13 Tournament Information</h4>
+        <h2 class="mt-4">Tree Canopy and Demographics</h2>
 
-         <h6>Team 1:</h6> 
-         <p>Kenny, LuMan. Cory, Don, and the MFin CakeMan</p>
-         <h6>Team 2:</h6> 
-         <p>Bones, Mr Zilla, Mr Travis, Dale, Mr B</p>
+<div class='map-overlay' id='features'><div id='pd'><p>Hover over a block-group to display data.</p></div></div>
+
+
+ <div id='wrapper' style='width: 100%; height: 500px;'>
+  <div id='map' style='width: 100%; height: 500px;'></div>
    
-        <h5>Tournament Format and Rules</h5>
-        <ul>
-          <li>Round Robin all partners and teams first</li>
-          <li>All games are All-Star difficulty.</li>
-          <li>Half beer/half wine/half shot per goal. Large waters per goal cost $2 each, which will go to the winner of the bracket.</li>
-          <li>Enter all scores into the Google form linked at the top. In addition to the information for this tournament, the scores will start building our All Time Standings.</li>
-          <li>1 random with a veto for you or other.</li>
-        </ul>
-        <h5>Tournament Standings</h5>
+
+<div class='map-overlay' id='legend'></div>
+</div>
+  
           <div class="row">
             <div class="col">
-              <table id='tourney_table418' class="table cell-border table-bordered datatable">
-                  <thead></thead>
-                  <tbody></tbody>
-              </table>        
-            </div>
-          </div>
-
-           <div class="row">
-            <div class="col">
-              <table id='games_table' class="table cell-border table-bordered datatable">
+              <table id='hotness_table' class="table cell-border table-bordered">
                   <thead></thead>
                   <tbody></tbody>
               </table>        
             </div>
           </div>
        
-</div>
       </div>
     </div>
     <!-- /#page-content-wrapper -->
@@ -166,10 +99,209 @@
   <!-- /#wrapper -->
 
   <!-- Bootstrap core JavaScript -->
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Bootstrap core JavaScript -->
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<div id="map"></div>
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiZWFwdHNkIiwiYSI6ImNrYm9mY2lpMjBkejMydWp5dTZ0ano0eXkifQ.ZyAbgbljrzb7qiRXKo7Ysg';
+  var map = new mapboxgl.Map({
+  container: 'map', // container id
+  style: 'mapbox://styles/eaptsd/cjfrcle255y2j2squ8qa47msm', // stylesheet location
+  center: [-77.09937,38.879556], // starting position [lng, lat]
+  minZoom: 11.25,
+  maxZoom: 15,
+  zoom: 11.25 // starting zoom
+});
+
+  map.on('load', function() {
+map.addSource('blocks', {
+type: 'vector',
+url: 'mapbox://eaptsd.74stkkzx'
+});
+
+map.addLayer({
+'id': 'blocks',
+'type': 'fill',
+'source':'blocks',
+'source-layer': 'TreeData-38pp2h',
+'layout': {},
+'paint': {
+"fill-color": ["step",["get","race_pct_nonwhitenh"],
+  "#f7cffd",0,
+  "#e5f5f9",.10,
+  "#ccece6",.20,
+  "#99d8c9",.3,
+  "#66c2a4",.4,
+  "#41ae76",.5,
+  "#238b45",.6,
+  "#006d2c",.7,
+  '#00441b'],
+'fill-opacity': 0.6
+}
+},
+            'waterway-label');
+
+
+
+var layers = ['0-10%', '10-20%', '20-30%', '30-40%', '40-50%', '50-60%', '60-70%', 'Over 70%'];
+var colors = ['#f7fcfd','#e5f5f9','#ccece6','#99d8c9','#66c2a4','#41ae76','#238b45','#006d2c','#00441b'];
+
+for (i = 0; i < layers.length; i++) {
+  var layer = layers[i];
+  var color = colors[i];
+  var item = document.createElement('div');
+  var key = document.createElement('span');
+  key.className = 'legend-key';
+  key.style.backgroundColor = color;
+
+  var value = document.createElement('span');
+  value.innerHTML = layer;
+  item.appendChild(key);
+  item.appendChild(value);
+  legend.appendChild(item);
+}
+
+map.on('mousemove', function(e) {
+  var blocks = map.queryRenderedFeatures(e.point, {
+    layers: ['blocks']
+  });
+
+  if (blocks.length > 0) {
+    document.getElementById('pd').innerHTML = '<h6><strong>' + blocks[0].properties["NAME.x"] + '</strong></h6><p><strong><em>' +  d3.format(".0%")(blocks[0].properties.race_pct_nonwhitenh) + '</strong>% Non-White</em></p>';
+  } else {
+    document.getElementById('pd').innerHTML = '<p>Hover over a block group.</p>';
+  }
+});
+
+});
+
+
+</script>
+
+  <script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 40, left: 80},
+    width = 400 - margin.left - margin.right,
+    height = 350 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Parse the Data
+d3.csv("hotness.csv", function(data) {
+
+// sort data
+data.sort(function(b, a) {
+  return b.Wk6 - a.Wk6;
+});
+
+// Add X axis
+var x = d3.scaleLinear()
+  .domain([0, 13])
+  .range([ 0, width]);
+svg.append("g")
+  .attr("transform", "translate(0," + height + ")")
+  .call(d3.axisBottom(x))
+  .selectAll("text")
+    .attr("transform", "translate(-10,0)rotate(-45)")
+     .attr("class", "axis-label")
+    .style("text-anchor", "end");
+
+// Y axis
+var y = d3.scaleBand()
+  .range([ 0, height ])
+  .domain(data.map(function(d) { return d.Name; }))
+  .padding(1);
+svg.append("g")
+  .call(d3.axisLeft(y)) .selectAll("text")
+    .attr("transform", "translate(-10,0)")
+        .attr("class", "axis-label")
+    .style("text-anchor", "end");
+
+var myColor = d3.scaleSequential(d3.interpolatePlasma).domain([12,1]);
+var lineColor = d3.scaleSequential(d3.interpolateRdYlGn).domain([-3,3]);
+
+// Lines
+svg.selectAll("myline")
+  .data(data)
+  .enter()
+  .append("line")
+    .attr("class","lollipop")
+    .attr("x1", function(d) { return x(d.Wk5); })
+    .attr("x2", function(d) { return x(d.Wk5); })
+    .attr("y1", function(d) { return y(d.Name); })
+    .attr("y2", function(d) { return y(d.Name); })
+    .attr("stroke", "grey")
+
+
+
+// Circles -> start at X=0
+svg.selectAll("mycircle")
+  .data(data)
+  .enter()
+  .append("circle")
+    .attr("cx", function(d) { return x(d.Wk5); })
+    .attr("cy", function(d) { return y(d.Name); })
+    .attr("r", "10")
+    .style("fill", "#fff")
+    .attr("stroke", "black")
+
+
+  // Circles -> start at X=0
+svg.selectAll("mylabels")
+  .data(data)
+  .enter()
+  .append("text")
+    .attr("x", function(d) { return x(d.Wk5); })
+    .attr("y", function(d) { return y(d.Name)+5; })
+    .attr("class","label")
+    .style("opacity",0)
+    .text(function(d) { return d.Wk6; }); 
   
+
+// Change the X coordinates of line and circle
+svg.selectAll("circle")
+  .transition()
+  .duration(2000)
+  .attr("cx", function(d) { return x(d.Wk6); })
+  .style("fill", function(d){return myColor(d.Wk6);})
+
+svg.selectAll(".lollipop")
+  .transition()
+  .duration(2000)
+  .attr("x1", function(d) { return x(d.Wk6); })
+  .attr("stroke", function(d) { return lineColor(d.Change); })
+
+svg.selectAll("text")
+  .transition()
+  .duration(2000)
+  .style("opacity",1)
+  .attr("x", function(d) { if (d.Change<0) {return x(d.Wk6)+15; }
+    else{return x(d.Wk6)-36;}
+
+})
+})
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
   <!-- Menu Toggle Script -->
   <script>
     $("#menu-toggle").click(function(e) {
@@ -177,7 +309,6 @@
       $("#wrapper").toggleClass("toggled");
     });
   </script>
-
 
 </body>
 

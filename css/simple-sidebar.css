@@ -15,6 +15,48 @@ h1,h2,h3,h4,h5,h6{
   font-family: 'Archivo Black', sans-serif;
 }
 
+
+
+.map-overlay {
+  
+  background: rgba(255, 255, 255, 0.6);
+  margin-right: 20px;
+  font-family: Arial, sans-serif;
+  overflow: auto;
+  border-radius: 3px;
+}
+
+#features {
+  top: 0;
+  height: 80px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+#wrapper {
+position: relative;
+}
+
+
+#legend {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 10px;
+  line-height: 18px;
+  height: 170px;
+  margin-bottom: 00px;
+  width: 110px;
+}
+
+.legend-key {
+  display: inline-block;
+  border-radius: 20%;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+}
+
 .btn-primary {
     color: #fff;
     background-color: #505050;
