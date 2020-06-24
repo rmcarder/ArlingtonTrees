@@ -33,7 +33,9 @@ setwd("C:/Users/rcarder/Documents/dev/ArlingtonTrees")
 countiesjson <- topojson_read("uscounties.json")
 cities<-read.csv("cities.csv")
 
-counties <- st_read("Tree_Canopy_2016_Polygons.shp") 
+setwd("C:/Users/rcarder/downloads")
+canopy <- st_read("Tree_Canopy_2016_Polygons-shp") 
+setwd("C:/Users/rcarder/Documents/dev/ArlingtonTrees")
 
 
 census_api_key('b2e47f1f1e9c7115a34a02992c149628712ecff8', install=TRUE, overwrite = TRUE)
@@ -249,7 +251,7 @@ FullData<-ACS%>%
   mutate()
 
 topojson_write(FullData,file="TreeData.json")
-
+topojson_write(canopy,file="canopy.json")
 
 
 
@@ -265,7 +267,15 @@ nonwhite<-ggplot() +
 
 
 
-
+nonwhite<-ggplot() +
+  geom_sf(data = canopy, aes(fill="green"),color=NA,alpha=1) +
+  scale_fill_gradient(low="white",high="#ffbb00",na.value="white",limits=c(min(FullData$race_pct_nonwhitenh, na.rm = TRUE), max(FullData$race_pct_nonwhitenh, na.rm = TRUE)),labels=scales::percent_format(accuracy=1))+
+  geom_sf(data = FullData, color = '#ffbb00', fill = NA, lwd=.1)+
+  geom_point(data=bamacities,aes(x=lon,y=lat))+
+  labs(fill="% Non-White")+
+  geom_text_repel(data=bamacities,aes(x=lon,y=lat,label=City),family="Montserrat",size=2)+
+  map_theme()+
+  theme(legend.position = "right")
 
 customRange2 = c(min(FullData$race_pct_nonwhitenh, na.rm = TRUE), max(FullData$race_pct_nonwhitenh, na.rm = TRUE)) # custom min / max values
 customRange3 = c(min(FullData$only_english_pct, na.rm = TRUE), max(FullData$only_english_pct, na.rm = TRUE)) # custom min / max values
