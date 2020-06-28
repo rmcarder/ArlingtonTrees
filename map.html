@@ -7,7 +7,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>AMBFHL - Tournament Central</title>
+  <title>Arlington Trees</title>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto:wght@300&display=swap" rel="stylesheet">
 
     <script src="js/jquery-3.2.1.min.js"></script>
@@ -45,8 +45,8 @@
     <!-- Page Content -->
     <div id="page-content-wrapper">
 
-        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-       <a href="index.html"><img class="icon logo logo-smaller" src="assets/DKDC.png" width="250" alt="AMBFHL logo"></a>
+          <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+       <a href="index.html"><img class="icon logo logo-smaller" src="assets/DKDC.png" width="180" alt="AMBFHL logo"></a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -60,7 +60,7 @@
               <a class="nav-link" href="map.html">Tree Canopy and Demographics</a>
             </li>
                <li class="nav-item active">
-                  <a class="nav-link" href="map.html">About</a>
+                  <a class="nav-link" href="about.html">About</a>
             </li>        
 
 
@@ -70,13 +70,16 @@
       </nav>
 
       <div class="container-fluid">
-        <h2 class="mt-4">Tree Canopy and Demographics</h2>
+        <h4 class="mt-4">Tree Canopy and Demographics</h4>
 
-<div class='map-overlay' id='features'><div id='pd'><p>Hover over a block-group to display data.</p></div></div>
+<div class='map-overlay' id='features'>
+  <div id='pdhead'><p>Hover over a block-group to display data.</p></div>
+  <div id='pd' style='column-count: 2; column-fill: balance;'><p>Zoom in to display tree canopy and building footprints.</p></div>
+</div>
 
 
- <div id='wrapper' style='width: 100%; height: 500px;'>
-  <div id='map' style='width: 100%; height: 500px;'></div>
+ <div id='wrapper' style='width: 100%; height: 400px;'>
+  <div id='map' style='width: 100%; height: 400px;'></div>
    
 
 <div class='map-overlay' id='legend'></div>
@@ -108,44 +111,98 @@
   var map = new mapboxgl.Map({
   container: 'map', // container id
   style: 'mapbox://styles/eaptsd/cjfrcle255y2j2squ8qa47msm', // stylesheet location
-  center: [-77.09937,38.879556], // starting position [lng, lat]
-  minZoom: 11.25,
-  maxZoom: 15,
-  zoom: 11.25 // starting zoom
+  center: [-77.10937,38.879556], // starting position [lng, lat]
+  minZoom: 10.95,
+  maxZoom: 18,
+  zoom: 10.95// starting zoom
 });
 
   map.on('load', function() {
 map.addSource('blocks', {
 type: 'vector',
-url: 'mapbox://eaptsd.74stkkzx'
+url: 'mapbox://eaptsd.74vnaz5b'
+});
+
+map.addSource('canopy', {
+type: 'vector',
+url: 'mapbox://eaptsd.887oloz0'
+});
+
+map.addSource('buildings', {
+type: 'vector',
+url: 'mapbox://eaptsd.0ccwwtkv'
 });
 
 map.addLayer({
 'id': 'blocks',
 'type': 'fill',
 'source':'blocks',
-'source-layer': 'TreeData-38pp2h',
+'source-layer': 'TreeData-a8dsgv',
 'layout': {},
 'paint': {
 "fill-color": ["step",["get","race_pct_nonwhitenh"],
-  "#f7cffd",0,
-  "#e5f5f9",.10,
-  "#ccece6",.20,
-  "#99d8c9",.3,
-  "#66c2a4",.4,
-  "#41ae76",.5,
-  "#238b45",.6,
-  "#006d2c",.7,
-  '#00441b'],
+  "#ffffff",0,
+  "#ffe6f0",.10,
+  "#ffcce1",.20,
+  "#ffb3d2",.3,
+  "#ff99c4",.4,
+  "#ff80b5",.5,
+  "#ff66a6",.6,
+  "#ff4d97",.7,
+    "#ff4996",.8,
+      "#ff4d97",.9,
+  '#ff3388'],
 'fill-opacity': 0.6
 }
 },
             'waterway-label');
 
 
+map.setPaintProperty('blocks', 'fill-opacity', [
+'interpolate',
+['exponential', 0.5],
+['zoom'],
+10.95,
+.8,
+14,
+.3,
+18,
+.1
+]);
 
-var layers = ['0-10%', '10-20%', '20-30%', '30-40%', '40-50%', '50-60%', '60-70%', 'Over 70%'];
-var colors = ['#f7fcfd','#e5f5f9','#ccece6','#99d8c9','#66c2a4','#41ae76','#238b45','#006d2c','#00441b'];
+map.addLayer({
+'id': 'buildings',
+'type': 'fill',
+'source':'buildings',
+'source-layer': 'buildings-0n4l13',
+'minzoom':15,
+'layout': {},
+'paint': {
+"fill-color": '#696969',
+'fill-opacity': .5
+}
+},
+            'waterway-label');
+
+map.addLayer({
+'id': 'canopy',
+'type': 'fill',
+'source':'canopy',
+'source-layer': 'Canopy-Data-ddfdrl',
+'layout': {},
+'paint': {
+"fill-color": '#014421',
+'fill-opacity': .5
+}
+},
+            'waterway-label');
+
+
+
+
+
+var layers = ['Tree Canopy','Buildings','% Non-White','0-10%', '10-20%', '20-30%', '30-40%', '40-50%', '50-60%', '60-70%', '70-80%','80-90%','90-100%'];
+var colors = ['#014421','#696969','none',"#ffe6f0","#ffcce1","#ffb3d2","#ff99c4","#ff80b5","#ff66a6","#ff4d97","#ff4996","#ff4d97",'#ff3388'];
 
 for (i = 0; i < layers.length; i++) {
   var layer = layers[i];
@@ -167,10 +224,18 @@ map.on('mousemove', function(e) {
     layers: ['blocks']
   });
 
+
+
   if (blocks.length > 0) {
-    document.getElementById('pd').innerHTML = '<h6><strong>' + blocks[0].properties["NAME.x"] + '</strong></h6><p><strong><em>' +  d3.format(".0%")(blocks[0].properties.race_pct_nonwhitenh) + '</strong>% Non-White</em></p>';
+    document.getElementById('pdhead').innerHTML = '<h6><strong>' + blocks[0].properties["NAME.x"] +' (Population ' + d3.format(",")(blocks[0].properties.tot_population_race) +')</strong></h6>';
   } else {
-    document.getElementById('pd').innerHTML = '<p>Hover over a block group.</p>';
+    document.getElementById('pdhead').innerHTML = '<p>Hover over a block-group to display data.</p>';
+  }
+
+  if (blocks.length > 0) {
+    document.getElementById('pd').innerHTML = '<p><strong><em>' +  d3.format(".0%")(blocks[0].properties.race_pct_nonwhitenh) + '</strong> Non-White</em><br><strong><em>' +  d3.format(".0%")(blocks[0].properties.inc_pct_poverty) + '</strong> Below Poverty Line</em><br><strong><em>' +  d3.format(".0%")(blocks[0].properties.PercentCanopy) + '</strong> Tree Canopy</em><br><strong><em>' +  d3.format(".0%")(blocks[0].properties.PercentOpen) + '</strong> Open Space</em></p>';
+  } else {
+    document.getElementById('pd').innerHTML = '<p>Zoom in to display tree canopy and building footprints.</p>';
   }
 });
 

@@ -4,12 +4,53 @@ author: "Rich Carder"
 date: "March 31, 2020"
 output: html_document
 ---
-  
-  
+
+  #install.packages("lwgeom")
+#install.packages("dplyr")
+#remotes::install_github("r-lib/tidyselect")
 #install.packages("googlesheets4")
 #install.packages("formattable")
 #install.packages("htmltools")
   #install.packages("geojsonio")
+  install.packages("vctrs")
+  library(RODBC)           # Provides database connectivity
+library(dplyr)           # only used for nice format of Head() function here
+library(gridExtra)
+library(forcats) 
+library(grid)
+library(DescTools)
+library(devtools)
+library(fitdistrplus)
+library(RGraphics)
+library(ggforce) # for 'geom_arc_bar'
+library(reshape)
+library(stringr)
+library(tidyr)
+library(timeDate)
+library(lubridate)
+library(RJSONIO)
+library(maps)
+library(rlang)
+library(mapdata)
+library(geosphere)
+library(ggmap)
+library(ggplot2)
+library(tools)
+library(mapplots)
+library(viridis)
+library(ggrepel)
+library(formattable)
+library(extrafont)
+library(alluvial)
+library(ggalluvial)
+library(waffle)
+library(directlabels)
+library(urbnmapr)
+library(statebins)
+library(rworldmap)
+library(tidyverse)
+library(tidyselect)
+
 library(googlesheets4)
 library(formattable)
 library(kableExtra)
@@ -22,6 +63,7 @@ library(sf)
 library(haven)
 library(jsonlite)
 library(geojsonio)
+library(lwgeom)
 #This script extracts ACS 5-year estimates at the block group (or any larger 
 #geography) using the tidycensus package. To run tidycensus, you first need
 #to set up a Census API key and run census_api_key(). Set working directory
@@ -29,155 +71,26 @@ library(geojsonio)
 #to set a different outpath.
 #
 
-setwd("C:/Users/rcarder/Documents/dev/ArlingtonTrees")
-countiesjson <- topojson_read("uscounties.json")
-cities<-read.csv("cities.csv")
-
 setwd("C:/Users/rcarder/downloads")
 canopy <- st_read("Tree_Canopy_2016_Polygons-shp") 
+buildings <- st_read("Building_Polygons-shp") 
 setwd("C:/Users/rcarder/Documents/dev/ArlingtonTrees")
 
 
 census_api_key('b2e47f1f1e9c7115a34a02992c149628712ecff8', install=TRUE, overwrite = TRUE)
 
-if (!require("pacman")) install.packages("pacman")
-pacman::p_load(tidyverse, tidycensus, viridis,stringr,dplyr,knitr,DT,datasets)
-
-
-##Fix fips field
-countiesjson$fips<-as.character(countiesjson$fips)
-topojson_write(FullData,file="TreeData.json")
-
+#if (!require("pacman")) install.packages("pacman")
+#pacman::p_load(tidyverse, tidycensus, viridis,stringr,dplyr,knitr,DT,datasets)
 
 #For code to run, need to first set up Census API key and run census_api_key()
 
 acs_table <- load_variables(2018, "acs5", cache = TRUE)
-view(acs_table)
-
-#Set ACS parameters
-# geography = 'block group'
-# year = 2016
-# state = 'OR'
-# county = 'Lane'
-
-collect_acs_data <- function(geography = 'tract', 
-                             year = 2018, 
-                             state = NULL, 
-                             county = NULL,
-                             outpath = '') {
-  
-    print(paste0('Processing state: ',state))
-  
-    #Income
-    income <- get_acs(geography = geography, sumfile = 'acs5', 
-                      variables = c('B19301_001', 'B17021_001', 'B17021_002'),
-                      year = year, state = state, county = county, geometry = FALSE) %>%
-              dplyr::select(-moe)%>%
-              spread(key = 'variable', value = 'estimate') %>%
-              mutate(
-                tot_population = B17021_001,
-                in_poverty = B17021_002) %>%
-              mutate(
-                inc_pct_poverty = in_poverty/tot_population,
-                inc_pcincome = B19301_001
-              ) %>%
-              dplyr::select(-starts_with("B1"))
-    
-    language <- get_acs(geography = geography, sumfile = 'acs5', 
-                      variables = c('B16001_001', 'B16001_002', 'B16001_003', 'B16001_004', 'B16001_005'),
-                      year = year, state = state, county = county, geometry = FALSE) %>%
-      dplyr::select(-moe)%>%
-      spread(key = 'variable', value = 'estimate') %>%
-      mutate(
-        tot_population = B16001_001,
-        only_english = B16001_002,
-        spanish=B16001_003,
-        spanish_with_english=B16001_004,
-        spanish_no_english=B16001_005) %>%
-      mutate(
-        only_english_pct = only_english/tot_population,
-        spanish_pct=B16001_003/tot_population,
-        spanish_with_english_pct=B16001_004/tot_population,
-        spanish_no_english_pct=B16001_005/tot_population
-      ) %>%
-      dplyr::select(-starts_with("B1"))
-    
-    #Race
-    
-    race <- get_acs(geography = geography, sumfile = 'acs5',
-                    variables = c(sapply(seq(1,10,1), function(v) return(paste("B02001_",str_pad(v,3,pad ="0"),sep=""))),
-                                  'B03002_001','B03002_002','B03002_003','B03002_012','B03002_013'),
-                    year = year, state = state,county = county, geometry = FALSE) %>%
-                    dplyr::select(-moe) %>%
-                    spread(key = 'variable', value = 'estimate') %>% 
-                    mutate(
-                      race_pct_white = B02001_002/B02001_001,
-                      race_pct_whitenh = B03002_003/B03002_001,
-                      race_pct_nonwhite = 1 - race_pct_white,
-                      race_pct_nonwhitenh = 1 - race_pct_whitenh,
-                      race_pct_amind = B02001_004/B02001_001,
-                      race_pct_black = B02001_003/B02001_001,
-                      race_pct_aapi = (B02001_005+B02001_006)/B02001_001,
-                      race_pct_native = B02001_004/B02001_001,
-                      race_pct_hisp = B03002_012/B03002_001
-                    ) %>%
-                    dplyr::select(-starts_with("B0"))  
-    
-    #Age
-    
- 
-    #Education
-    
-    educ <- get_acs(geography = geography, sumfile = 'acs5',
-                    variables = c(sapply(seq(1,35,1), 
-                                         function(v) return(paste("B15002_",str_pad(v,3,pad ="0"),sep="")))),
-                    year = year, state = state, county = county, geometry = FALSE)
-    
-    output <- income %>% merge(age) %>% merge(educ) %>% merge(race)%>%merge(language)
-    
-    dst = paste0(outpath,state,'.csv')
-    write.csv(output,dst)
-
-    }
-
-states <- state.name
-
-lapply(states %>% head(3), collect_acs_data, geography = 'block group', 
-       year = 2017,
-       county = NULL,
-       outpath = '')
-
-
-write.csv(acs_table,"ACS Variables.csv")
-
-
-
-
-#language <- get_acs(geography = 'tract', sumfile = 'acs5', year=2018,
-#                    variables = c('B16001_001', 'B16001_002', 'B16001_003', 'B16001_004', 'B16001_005')) %>%
-#  dplyr::select(-moe)%>%
- # spread(key = 'variable', value = 'estimate') %>%
- # mutate(
-#    tot_population = B16001_001,
- #   only_english = B16001_002,
-  #  spanish=B16001_003,
-   # spanish_with_english=B16001_004,
-    #spanish_no_english=B16001_005) %>%
-#  mutate(
- #   only_english_pct = only_english/tot_population,
-  #  spanish_pct=B16001_003/tot_population,
-   # spanish_with_english_pct=B16001_004/tot_population,
-    #spanish_no_english_pct=B16001_005/tot_population
-#  ) %>%
- # dplyr::select(-starts_with("B1"))
-
-
 
 
 language <- get_acs(geography = 'block group',
                     variables = c('B16001_001','B16001_002','B16001_003','B16001_004','B16001_005',
                                   'B16001_075','B16001_006'),
-                    year = 2014, state = 'Virginia',county="Arlington County", geometry = FALSE) %>%
+                    year = 2013, state = 'Virginia',county="Arlington County", geometry = FALSE) %>%
   dplyr::select(-moe) %>%
   spread(key = 'variable', value = 'estimate') %>% 
   mutate(
@@ -242,40 +155,91 @@ ACS <- get_acs(geography = 'block group',
   dplyr::select(-starts_with("B0"))%>%
   dplyr::select(-starts_with("B1"))
 
+??eval_select
 
-ACS$GEOID<-as.integer(ACS$GEOID)
-turnout<-read.csv("countypres_2000-2016.csv")
-electionanalysis<-read.csv("election-context-2018.csv")
+FullData<-ACS
 
-FullData<-ACS%>%
-  mutate()
+FullData$area <- st_area(FullData$geometry)
 
-topojson_write(FullData,file="TreeData.json")
-topojson_write(canopy,file="canopy.json")
-
-
-
+##plots to test
 nonwhite<-ggplot() +
   geom_sf(data = FullData, aes(fill=(race_pct_nonwhitenh)),color=NA,alpha=1) +
   scale_fill_gradient(low="white",high="#ffbb00",na.value="white",limits=c(min(FullData$race_pct_nonwhitenh, na.rm = TRUE), max(FullData$race_pct_nonwhitenh, na.rm = TRUE)),labels=scales::percent_format(accuracy=1))+
   geom_sf(data = FullData, color = '#ffbb00', fill = NA, lwd=.1)+
-  geom_point(data=bamacities,aes(x=lon,y=lat))+
   labs(fill="% Non-White")+
-  geom_text_repel(data=bamacities,aes(x=lon,y=lat,label=City),family="Montserrat",size=2)+
   map_theme()+
-  theme(legend.position = "right")
+  theme(legend.position = "right")+
+  geom_sf(data = canopy,fill="green",color=NA,alpha=.4)
 
 
 
-nonwhite<-ggplot() +
-  geom_sf(data = canopy, aes(fill="green"),color=NA,alpha=1) +
-  scale_fill_gradient(low="white",high="#ffbb00",na.value="white",limits=c(min(FullData$race_pct_nonwhitenh, na.rm = TRUE), max(FullData$race_pct_nonwhitenh, na.rm = TRUE)),labels=scales::percent_format(accuracy=1))+
-  geom_sf(data = FullData, color = '#ffbb00', fill = NA, lwd=.1)+
-  geom_point(data=bamacities,aes(x=lon,y=lat))+
-  labs(fill="% Non-White")+
-  geom_text_repel(data=bamacities,aes(x=lon,y=lat,label=City),family="Montserrat",size=2)+
-  map_theme()+
-  theme(legend.position = "right")
+canopymap<-ggplot() +
+  geom_sf(data = canopy,fill="green",color=NA,alpha=.4) 
+
+
+st_crs(canopy)
+st_crs(FullData)
+st_crs(buildings)
+canopy<-st_transform(canopy, crs=3857,proj4string="+proj=longlat +datum=WGS84 +no_defs")
+FullData<-st_transform(FullData, crs=3857,proj4string="+proj=longlat +datum=WGS84 +no_defs")
+buildings<-st_transform(buildings, crs=3857,proj4string="+proj=longlat +datum=WGS84 +no_defs")
+
+canopynew<-st_transform(structure(canopy, proj4string = "+init=epsg:4326"), "+init=epsg:4269")
+FullDatanew<-st_transform(structure(FullData, proj4string = "+init=epsg:4326"), "+init=epsg:4269")
+
+
+st_crs(canopynew)
+st_crs(FullDatanew)
+
+#run the intersect function, converting the output to a tibble in the process
+int <- as_tibble(st_intersection(st_make_valid(canopy), st_make_valid(FullData)))
+intbuildings <- as_tibble(st_intersection(st_make_valid(buildings), st_make_valid(FullData)))
+
+
+#add in an area count column to the tibble (area of each arable poly in intersect layer)
+int$area <- st_area(int$geometry)
+intbuildings$area <- st_area(intbuildings$geometry)
+
+#group data by county area and calculate the total arable land area per county
+#output as new tibble
+newareas <- int %>%
+  group_by(GEOID) %>%
+  summarise(areaCanopy = sum(area))
+
+buildingareas <- intbuildings %>%
+  group_by(GEOID) %>%
+  summarise(areaBuildings = sum(area))
+
+#change data type of areaArable field to numeric (from 'S3: units' with m^2 suffix)
+newareas$areaCanopy <- as.numeric(newareas$areaCanopy)
+buildingareas$areaBuildings <- as.numeric(buildingareas$areaBuildings)
+FullData$area <- as.numeric(FullData$area)
+
+FullDataArea<-FullData%>%
+  left_join(newareas, by="GEOID")%>%
+  left_join(buildingareas, by="GEOID")%>%
+  mutate(PercentCanopy=areaCanopy/area,
+         NoBuilding=area-areaBuildings,
+         PercentOpen=(area-areaCanopy-areaBuildings)/area)
+
+FullDataArea$PercentCanopy <- as.numeric(FullDataArea$PercentCanopy)
+
+
+topojson_write(FullDataArea,file="TreeData.json")
+shp_out <- st_write(canopy, "NewCanopy.shp")
+
+
+
+topojson_write(buildings,file="buildings.json")
+
+
+
+
+
+
+
+
+
 
 customRange2 = c(min(FullData$race_pct_nonwhitenh, na.rm = TRUE), max(FullData$race_pct_nonwhitenh, na.rm = TRUE)) # custom min / max values
 customRange3 = c(min(FullData$only_english_pct, na.rm = TRUE), max(FullData$only_english_pct, na.rm = TRUE)) # custom min / max values
